@@ -8,5 +8,5 @@
 // SIGNIN_URL: the sign-in helper (signin-helper/worker.js) that keeps the
 // phone signed in. Empty: the phone signs in for an hour at a time.
 export const GOOGLE_CLIENT_ID = '';
-export const PHONE_URL = '';
+export const PHONE_URL = 'https://adarsh-pandey07.github.io/bookmark-vault-phone/';
 export const SIGNIN_URL = '';
