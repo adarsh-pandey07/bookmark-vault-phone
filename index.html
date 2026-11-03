@@ -42,6 +42,12 @@ a { color: var(--accent); text-decoration: none; }
 .setup input { width: 100%; padding: 12px; border-radius: 12px; border: .5px solid var(--sep); background: var(--surface); margin-bottom: 12px; font-size: 16px; }
 .primary { display: block; width: 100%; padding: 13px; border: 0; border-radius: 12px; background: var(--accent); color: #fff; font-weight: 600; }
 .primary:disabled { opacity: .5; }
+/* Google's sign-in button style: white, the G logo, "Sign in with Google" */
+.google-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #747775; background: #fff; color: #1f1f1f; font: 500 16px/1.2 Roboto, -apple-system, system-ui, sans-serif; }
+.google-btn svg { width: 20px; height: 20px; flex: none; }
+.google-btn:disabled { opacity: .5; }
+@media (prefers-color-scheme: dark) { .google-btn { background: #131314; color: #e3e3e3; border-color: #8e918f; } }
+.setup .connect-note { font-size: 13px; margin: 10px 0 0; text-align: center; }
 .setup .step { text-align: left; margin: 0 0 22px; }
 .setup .step-head { display: flex; align-items: center; gap: 10px; font-weight: 600; margin-bottom: 10px; }
 .setup .step-num { width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 13px; display: grid; place-items: center; flex: none; }
@@ -178,9 +184,10 @@ main { padding: 12px 12px 0; max-width: 680px; margin: 0 auto; }
     <div id="installSlot"></div>
   </div>
   <div id="connectStep">
-    <div id="connectHead" class="step-head" hidden><span class="step-num">2</span><span>Connect Google Drive</span></div>
+    <div id="connectHead" class="step-head" hidden><span class="step-num">2</span><span id="connectTitle">Connect Google Drive</span></div>
     <input id="clientId" placeholder="Google client ID" autocomplete="off" autocapitalize="off" spellcheck="false" hidden>
     <button id="connect" class="primary">Connect Google Drive</button>
+    <p id="connectNote" class="connect-note" hidden>Bookmark Vault can only see its own folder in your Google Drive, nothing else.</p>
     <p id="setupStatus" class="status" role="status"></p>
   </div>
 </section>
