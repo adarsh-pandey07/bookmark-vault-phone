@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Bookmarks">
+<link rel="manifest" href="manifest.webmanifest">
+<script>
+  // Android may offer to install before the app's code has loaded: keep the offer for install.js.
+  addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); window.bvInstallOffer = e; });
+</script>
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>Bookmark Vault</title>
+<link rel="stylesheet" href="shared/tokens.css">
+<link rel="stylesheet" href="shared/card.css">
+<style>
+/* Phone layout. Colors (tokens.css) and the bookmark card (card.css) are
+   shared with the extension's dashboard, so both look the same. */
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+:root { --tabbar-h: 56px; --bar: color-mix(in srgb, var(--bg) 86%, transparent); }
+/* Things scrolled into view (focus, find) stay clear of the header and tab bar. */
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: 170px; scroll-padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 16px); }
+body { margin: 0; font: 16px/1.4 -apple-system, BlinkMacSystemFont, system-ui, sans-serif; background: var(--bg); color: var(--text);
+  -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
+button, select, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: var(--accent); text-decoration: none; }
+.muted { color: var(--muted); }
+
+/* setup */
+.setup { max-width: 440px; margin: 0 auto; padding: calc(48px + env(safe-area-inset-top)) 20px 20px; text-align: center; }
+.setup img { width: 72px; height: 72px; border-radius: 16px; }
+.setup h1 { font-size: 26px; margin: 14px 0 6px; letter-spacing: -.02em; }
+.setup p { color: var(--muted); margin: 0 0 18px; }
+.setup input { width: 100%; padding: 12px; border-radius: 12px; border: .5px solid var(--sep); background: var(--surface); margin-bottom: 12px; font-size: 16px; }
+.primary { display: block; width: 100%; padding: 13px; border: 0; border-radius: 12px; background: var(--accent); color: #fff; font-weight: 600; }
+.primary:disabled { opacity: .5; }
+.setup .step { text-align: left; margin: 0 0 22px; }
+.setup .step-head { display: flex; align-items: center; gap: 10px; font-weight: 600; margin-bottom: 10px; }
+.setup .step-num { width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 13px; display: grid; place-items: center; flex: none; }
+.setup .step.later .step-num { background: var(--muted); }
+.setup .step.later .step-head { color: var(--muted); }
+/* install guide */
+.install { background: var(--surface); border-radius: 14px; padding: 14px; text-align: left; }
+.install-title { font-weight: 600; margin-bottom: 10px; }
+.setup .install:not(.done) .install-title { display: none; }
+.install-steps { list-style: none; margin: 0; padding: 0; counter-reset: s; }
+.install-steps li { display: flex; align-items: center; gap: 12px; padding: 8px 0; font-size: 15px; line-height: 1.35; }
+.install-steps li + li { border-top: .5px solid var(--sep); }
+.install-ic { flex: none; width: 34px; height: 34px; border-radius: 9px; background: var(--bg); display: grid; place-items: center; }
+.install-ic svg { width: 20px; height: 20px; fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.install-ic svg circle { fill: var(--accent); stroke: none; }
+.install-note { font-size: 13px; color: var(--muted); margin: 10px 0 0 !important; }
+.install-btn { margin-top: 2px; }
+.browse-install { margin: 4px 16px 0; position: relative; }
+.browse-install:has(.install[hidden]) { display: none; }
+.install-close { position: absolute; top: 6px; right: 6px; border: 0; background: none; color: var(--muted); font-size: 20px; width: 32px; height: 32px; }
+
+/* header */
+#app { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 16px); }
+header { position: sticky; top: 0; z-index: 5; background: var(--bar);
+  -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px);
+  padding: calc(8px + env(safe-area-inset-top)) 16px 8px; border-bottom: .5px solid var(--sep); }
+.titlebar { display: flex; align-items: center; gap: 8px; min-height: 36px; }
+.back { border: 0; background: none; color: var(--accent); font-size: 17px; padding: 4px 6px 4px 0; margin-left: -4px; display: inline-flex; align-items: center; gap: 2px; max-width: 40%; }
+.back span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.back svg { width: 12px; height: 20px; flex: none; stroke: currentColor; fill: none; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.titlebar h1 { font-size: 24px; margin: 0; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -.02em; display: flex; align-items: center; gap: 8px; }
+.titlebar h1 .t-avatar { width: 28px; height: 28px; }
+.titlebar h1 .count { font-size: 15px; font-weight: 500; color: var(--muted); letter-spacing: 0; }
+.sync-btn { border: 0; background: var(--fill); border-radius: 999px; padding: 6px 12px; font-size: 14px; font-weight: 600; color: var(--accent); flex: none; }
+.sync-btn:disabled { color: var(--muted); }
+.status { font-size: 12.5px; color: var(--muted); margin: 2px 0 0; }
+.status:empty { display: none; }
+.status.warn { color: #c26a00; }
+.status.error { color: var(--danger); }
+@media (prefers-color-scheme: dark) { .status.warn { color: #ffb340; } }
+.controls:not(:empty) { margin-top: 8px; display: flex; flex-direction: column; gap: 8px; }
+.search { width: 100%; padding: 9px 12px; border-radius: 10px; border: 0; background: var(--fill); font-size: 16px; }
+
+/* status switch inside a list (same look as the dashboard's) */
+.status-seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; background: var(--fill); border-radius: 9px; padding: 2px; }
+.status-seg button { border: 0; background: none; border-radius: 7px; padding: 5px 4px; font-size: 13.5px; font-weight: 500; white-space: nowrap; color: var(--muted); }
+.status-seg button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.12); font-weight: 600; }
+@media (prefers-color-scheme: dark) { .status-seg button[aria-pressed="true"] { background: #636366; color: #fff; } }
+/* sub-categories: chips that scroll sideways */
+.subcats { flex-wrap: nowrap; overflow-x: auto; margin: 0 -16px; padding: 0 16px; scrollbar-width: none; }
+.subcats::-webkit-scrollbar { display: none; }
+.subcats .chip { flex: none; font-size: 14px; padding: 6px 12px; }
+.subcats .chip[aria-pressed="true"] { background: var(--c); color: #fff; }
+
+/* bookmark cards: card.css, plus touch-sized buttons */
+main { padding: 12px 12px 0; max-width: 680px; margin: 0 auto; }
+#list { display: flex; flex-direction: column; gap: 12px; }
+#list.browse { display: block; }
+.card { padding: 14px 16px 10px; }
+.card:hover { transform: none; }
+.card .text.clamped { -webkit-line-clamp: 8; }
+.card .more { font-size: 15px; padding: 6px 0 0; }
+.who button { color: inherit; }
+.avatar.letter { display: grid; place-items: center; color: #fff; font-weight: 600; font-size: 17px; }
+.media.n1 img, .media.n1 video { max-height: 360px; }
+.chip { font-size: 12.5px; padding: 4px 10px; }
+.card-foot { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; padding-top: 10px; border-top: .5px solid var(--sep); color: var(--muted); font-size: 13px; }
+.card-foot .stats { display: flex; gap: 14px; font-variant-numeric: tabular-nums; }
+.card-foot .stats:empty { display: none; }
+.card-foot .acts { display: flex; align-items: center; gap: 6px; }
+.star-btn { border: 0; background: var(--fill); border-radius: 8px; width: 40px; height: 36px; display: grid; place-items: center; color: var(--muted); flex: none; }
+.star-btn .star { width: 19px; height: 19px; vertical-align: 0; }
+.card-foot .seg { display: inline-flex; background: var(--fill); border-radius: 9px; padding: 2px; flex: none; }
+.card-foot .seg button { border: 0; background: none; border-radius: 7px; padding: 0 12px; height: 32px; font-size: 14px; font-weight: 500; color: var(--muted); }
+.card-foot .seg button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+@media (prefers-color-scheme: dark) { .card-foot .seg button[aria-pressed="true"] { background: #636366; color: #fff; } }
+.later-select { -webkit-appearance: none; appearance: none; border: 0; background: none; color: var(--accent); font-size: 14px; padding: 8px 6px; flex: none; max-width: 100px; }
+.open-x { margin-left: auto; font-size: 14px; padding: 8px 2px; white-space: nowrap; }
+.empty { text-align: center; color: var(--muted); padding: 48px 24px; }
+.empty b { display: block; color: var(--text); font-size: 17px; margin-bottom: 4px; }
+.more-btn { display: block; margin: 12px auto 0; border: 0; background: var(--fill); border-radius: 10px; padding: 10px 18px; }
+
+/* Browse: grouped lists */
+.group-title { font-size: 13px; text-transform: uppercase; letter-spacing: .02em; color: var(--muted); margin: 18px 16px 6px; }
+.group-title:first-child { margin-top: 4px; }
+.rows { background: var(--surface); border-radius: 12px; overflow: hidden; }
+@media (prefers-color-scheme: dark) { .rows { box-shadow: inset 0 0 0 .5px var(--sep); } }
+.row { display: flex; align-items: center; gap: 12px; width: 100%; border: 0; background: none; text-align: left; padding: 0 14px; min-height: 48px; font-size: 16px; color: var(--text); }
+.row + .row { box-shadow: inset 54px .5px 0 -54px var(--sep); }
+.rows.plain .row + .row { box-shadow: inset 14px .5px 0 -14px var(--sep); }
+.row:active { background: var(--fill); }
+.row .ic { width: 28px; height: 28px; border-radius: 7px; display: grid; place-items: center; font-size: 15px; flex: none; color: #fff; }
+.row .avatar { width: 28px; height: 28px; font-size: 13px; }
+.row .label { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row .label small { color: var(--muted); font-size: 14px; margin-left: 6px; }
+.row .n { color: var(--muted); font-variant-numeric: tabular-nums; }
+.row .chev { width: 8px; height: 14px; stroke: var(--muted); opacity: .6; fill: none; stroke-width: 2; flex: none; }
+.row .swatch { margin: 0 9px; }
+.row.danger { color: var(--danger); }
+.row.link { color: var(--accent); }
+.note-line { font-size: 13px; color: var(--muted); margin: 6px 16px 0; }
+
+/* bottom tab bar: Search in the middle */
+.tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; display: grid; grid-template-columns: repeat(5, 1fr);
+  background: var(--bar); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px);
+  border-top: .5px solid var(--sep); padding-bottom: env(safe-area-inset-bottom); }
+.tab { border: 0; background: none; height: var(--tabbar-h); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  font-size: 10.5px; font-weight: 500; color: var(--muted); }
+.tab svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.tab[aria-current="page"] { color: var(--accent); }
+.tab.center span.bubble { width: 46px; height: 46px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 40%, transparent); }
+.tab.center svg { width: 24px; height: 24px; stroke-width: 2.2; }
+.tab.center .tab-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.tab.center[aria-current="page"] span.bubble { box-shadow: 0 0 0 3px var(--accent-soft), 0 4px 14px color-mix(in srgb, var(--accent) 40%, transparent); }
+
+/* undo bar */
+.toast { position: fixed; left: 12px; right: 12px; bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 10px); z-index: 11;
+  max-width: 520px; margin: 0 auto; display: flex; align-items: center; gap: 12px; padding: 10px 10px 10px 16px; border-radius: 12px;
+  background: #2c2c2e; color: #fff; font-size: 15px; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
+.toast span { flex: 1; }
+.toast button { border: 0; background: none; color: #64d2ff; font-weight: 600; padding: 6px 8px; }
+@media (prefers-color-scheme: dark) { .toast { background: #48484a; } }
+</style>
+</head>
+<body>
+
+<section id="setup" class="setup" hidden>
+  <img src="icons/icon-192.png" alt="">
+  <h1>Bookmark Vault</h1>
+  <p>Your X bookmarks from your computer, on your phone. They come from a folder in your Google Drive that Bookmark Vault on your computer keeps up to date.</p>
+  <div id="installStep" class="step" hidden>
+    <div class="step-head"><span class="step-num">1</span><span id="installStepTitle">Add it to your home screen</span></div>
+    <div id="installSlot"></div>
+  </div>
+  <div id="connectStep">
+    <div id="connectHead" class="step-head" hidden><span class="step-num">2</span><span>Connect Google Drive</span></div>
+    <input id="clientId" placeholder="Google client ID" autocomplete="off" autocapitalize="off" spellcheck="false" hidden>
+    <button id="connect" class="primary">Connect Google Drive</button>
+    <p id="setupStatus" class="status" role="status"></p>
+  </div>
+</section>
+
+<div id="app" hidden>
+  <header>
+    <div class="titlebar">
+      <button id="back" class="back" hidden><svg viewBox="0 0 12 20" aria-hidden="true"><path d="M10 2 2 10l8 8"/></svg><span id="backLabel">Browse</span></button>
+      <h1 id="title">New</h1>
+      <button id="sync" class="sync-btn">Sync</button>
+    </div>
+    <div id="status" class="status" role="status"></div>
+    <div id="controls" class="controls"></div>
+  </header>
+  <main id="main">
+    <div id="list"></div>
+    <button id="more" class="more-btn" hidden>Show more</button>
+  </main>
+  <nav class="tabbar" aria-label="Sections">
+    <button class="tab" data-tab="new">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 13.5 5.5 5h13l2.5 8.5V19a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M3 13.5h5l1.5 2.5h5l1.5-2.5h5"/></svg>
+      <span class="tab-label">New</span></button>
+    <button class="tab" data-tab="todo">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12.2 2.7 2.7L16.2 9.3"/></svg>
+      <span class="tab-label">To do</span></button>
+    <button class="tab center" data-tab="search">
+      <span class="bubble"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg></span>
+      <span class="tab-label">Search</span></button>
+    <button class="tab" data-tab="star">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.2 2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 17l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/></svg>
+      <span class="tab-label">Important</span></button>
+    <button class="tab" data-tab="browse">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7.5a1.5 1.5 0 0 1 1.5-1.5h4.4l2 2h8.6A1.5 1.5 0 0 1 21 9.5v8A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z"/></svg>
+      <span class="tab-label">Browse</span></button>
+  </nav>
+  <div id="toast" class="toast" role="status" hidden><span id="toastText"></span><button id="undo">Undo</button></div>
+</div>
+
+<script src="https://accounts.google.com/gsi/client" async></script>
+<!-- ?v= makes browsers fetch the new file instead of an old saved copy. Raise it with VERSION in sw.js. -->
+<script type="module" src="app.js?v=5"></script>
+<script>
+// If the app didn't start (an old saved file, or a script error), say so instead of a blank page.
+setTimeout(() => {
+  if (window.bvStarted) return;
+  document.getElementById('setup').hidden = false;
+  const s = document.getElementById('setupStatus');
+  s.textContent = 'The page didn\'t start. Reload it while holding Shift (or clear this site\'s data) to get the latest version.';
+  s.className = 'status error';
+}, 4000);
+</script>
+</body>
+</html>
