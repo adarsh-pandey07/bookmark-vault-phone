@@ -1,0 +1,17 @@
+/* "Working on it" signs, shared by the dashboard, the popup and the phone
+   page: a small spinning ring, and a button that shows it while it waits. */
+.spinner {
+  display: inline-block; flex: none; box-sizing: border-box;
+  width: 1em; height: 1em; vertical-align: -.15em;
+  border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%;
+  animation: bv-spin .7s linear infinite;
+}
+@keyframes bv-spin { to { transform: rotate(360deg); } }
+/* Calmer for people who turn off motion: a slow fade instead of spinning. */
+@media (prefers-reduced-motion: reduce) {
+  .spinner { animation: bv-fade 1.4s ease-in-out infinite; border-right-color: currentColor; }
+}
+@keyframes bv-fade { 50% { opacity: .3; } }
+[aria-busy="true"] { cursor: progress; }
+button[aria-busy="true"] { opacity: 1 !important; }
+button[aria-busy="true"] .spinner { margin-right: .45em; }

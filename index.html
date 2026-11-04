@@ -19,6 +19,7 @@
 <title>Bookmark Vault</title>
 <link rel="stylesheet" href="shared/tokens.css">
 <link rel="stylesheet" href="shared/card.css">
+<link rel="stylesheet" href="shared/busy.css">
 <style>
 /* Phone layout. Colors (tokens.css) and the bookmark card (card.css) are
    shared with the extension's dashboard, so both look the same. */
@@ -83,6 +84,8 @@ header { position: sticky; top: 0; z-index: 5; background: var(--bar);
 .titlebar h1 .count { font-size: 15px; font-weight: 500; color: var(--muted); letter-spacing: 0; }
 .sync-btn { border: 0; background: var(--fill); border-radius: 999px; padding: 6px 12px; font-size: 14px; font-weight: 600; color: var(--accent); flex: none; }
 .sync-btn:disabled { color: var(--muted); }
+.sync-btn[aria-busy="true"] { color: var(--accent); display: inline-flex; align-items: center; }
+.status .spinner { margin-right: 6px; color: var(--accent); }
 .status { font-size: 12.5px; color: var(--muted); margin: 2px 0 0; }
 .status:empty { display: none; }
 .status.warn { color: #c26a00; }
@@ -228,7 +231,7 @@ main { padding: 12px 12px 0; max-width: 680px; margin: 0 auto; }
 
 <script src="https://accounts.google.com/gsi/client" async></script>
 <!-- ?v= makes browsers fetch the new file instead of an old saved copy. Raise it with VERSION in sw.js. -->
-<script type="module" src="app.js?v=5"></script>
+<script type="module" src="app.js?v=8"></script>
 <script>
 // If the app didn't start (an old saved file, or a script error), say so instead of a blank page.
 setTimeout(() => {

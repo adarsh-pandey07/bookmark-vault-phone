@@ -9,6 +9,7 @@ import { statusOf, snoozeChoices, isDue } from './shared/reading.js';
 import { GOOGLE_CLIENT_ID, SIGNIN_URL } from './shared/config.js';
 import * as store from './store.js';
 import { installBox, isInstalled, device, onInstallChange } from './install.js';
+import { busy, spinner } from './shared/busy.js';
 import { recordEdit, overlay, unconfirmed, editsBody, syncWithDrive, NothingOnDrive } from './sync.js';
 
 const $ = (id) => document.getElementById(id);
@@ -117,14 +118,19 @@ function signIn() {
 const dirty = () => editsBody(state.pending) !== (state.sent ?? editsBody({}));
 const pendingCount = () => Object.keys(state.pending).length;
 
+// What a running sync is doing, shown next to a spinner: "Waiting for
+// Google…", "Getting your bookmarks…", "Syncing…".
+const setStep = (text) => { state.step = text; renderStatus(); };
+
 async function sync({ interactive = false } = {}) {
   if (state.syncing) return;
   state.syncing = true;
-  renderStatus();
+  setStep(state.base ? 'Syncing…' : 'Connecting…');
   try {
     state.error = await syncOnce(interactive);
   } finally {
     state.syncing = false;
+    state.step = '';
     show();
     if (!state.error && dirty()) syncSoon(); // you changed something while it ran
   }
@@ -136,8 +142,10 @@ async function syncOnce(interactive, retry = true) {
   try { token = await currentToken(); } catch { return 'offline'; }
   if (!token) {
     if (!interactive) return state.error;
+    setStep('Waiting for Google…'); // its sign-in window is open
     try { token = await signIn(); } catch (e) { return e.message; }
   }
+  setStep(state.base ? 'Syncing…' : 'Getting your bookmarks…'); // the first download is the slow part
   try {
     const r = await syncWithDrive(drive, token, {
       files: state.files, base: state.base, sent: state.sent, getPending: async () => state.pending,
@@ -636,7 +644,7 @@ function renderStatus() {
   let level = '';
   const n = pendingCount();
   const changes = `${n} change${n === 1 ? '' : 's'}`;
-  if (state.syncing) text = 'Syncing…';
+  if (state.syncing) text = state.step || 'Syncing…';
   else if (state.error === 'offline' || !navigator.onLine) { text = `Offline${dirty() ? ` · ${changes} saved on this phone, will sync later` : ''}`; level = 'warn'; }
   else if (state.error) { text = state.error; level = 'error'; }
   else if (state.base) {
@@ -646,10 +654,23 @@ function renderStatus() {
     text = parts.join(' · ');
     if (dirty() && !signedIn()) level = 'warn';
   }
-  box.textContent = text;
+  if (state.syncing && !state.base) text = ''; // the button says it (below)
+  if (state.syncing && text) box.replaceChildren(spinner(), text);
+  else box.textContent = text;
   box.className = `status ${level}`;
-  $('sync').disabled = state.syncing;
-  $('connect').disabled = state.syncing;
+  syncButtons();
+}
+
+// While syncing, the Sync and Connect buttons spin and say what's happening.
+let connectDone = null, syncDone = null;
+function syncButtons() {
+  if (state.syncing) {
+    if (!state.base) { connectDone ??= busy($('connect'), state.step); connectDone.step(state.step); }
+    else syncDone ??= busy($('sync'), 'Syncing');
+  } else {
+    connectDone?.(); syncDone?.();
+    connectDone = syncDone = null;
+  }
 }
 
 function show() {

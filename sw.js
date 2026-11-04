@@ -1,10 +1,10 @@
 // Saves the page's own files so it opens without a connection. Your
 // bookmarks themselves are kept by the page (IndexedDB), not here.
 // Change VERSION when publishing new files so phones pick them up.
-const VERSION = 'v7';
+const VERSION = 'v8';
 const FILES = [
-  './', 'index.html', 'app.js', 'app.js?v=5', 'install.js', 'sync.js', 'store.js', 'manifest.webmanifest',
-  'shared/drive-api.js', 'shared/user-fields.js', 'shared/reading.js', 'shared/config.js', 'shared/tokens.css', 'shared/card.css',
+  './', 'index.html', 'app.js', 'app.js?v=8', 'install.js', 'sync.js', 'store.js', 'manifest.webmanifest',
+  'shared/drive-api.js', 'shared/user-fields.js', 'shared/reading.js', 'shared/config.js', 'shared/tokens.css', 'shared/card.css', 'shared/busy.css', 'shared/busy.js',
   'icons/icon-192.png', 'icons/apple-touch-icon.png',
 ];
 
